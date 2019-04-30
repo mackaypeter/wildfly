@@ -477,9 +477,6 @@ public class WSTrustTestCase {
     @OperateOnDeployment(HOLDER_OF_KEY_SERVER_DEP)
     @WrapThreadContextClassLoader
     public void testHolderOfKey() throws Exception {
-        // TLSv1.2 seems buggy on JDK-11 (Invalid ECDH ServerKeyExchange signature)
-        String originalProtocols = System.getProperty("https.protocols");
-        System.setProperty("https.protocols", "TLSv1.1");
 
         Bus bus = BusFactory.newInstance().createBus();
         try {
@@ -495,11 +492,6 @@ public class WSTrustTestCase {
 
         } finally {
             bus.shutdown(true);
-            if (originalProtocols == null) {
-                System.clearProperty("https.protocols");
-            } else {
-                System.setProperty("https.protocols", originalProtocols);
-            }
         }
     }
 
@@ -537,9 +529,6 @@ public class WSTrustTestCase {
     @OperateOnDeployment(BEARER_SERVER_DEP)
     @WrapThreadContextClassLoader
     public void testBearer() throws Exception {
-        // TLSv1.2 seems buggy on JDK-11 (Invalid ECDH ServerKeyExchange signature)
-        String originalProtocols = System.getProperty("https.protocols");
-        System.setProperty("https.protocols", "TLSv1.1");
 
         Bus bus = BusFactory.newInstance().createBus();
         try {
@@ -554,11 +543,6 @@ public class WSTrustTestCase {
 
         } finally {
             bus.shutdown(true);
-            if (originalProtocols == null) {
-                System.clearProperty("https.protocols");
-            } else {
-                System.setProperty("https.protocols", originalProtocols);
-            }
         }
     }
 
