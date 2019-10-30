@@ -20,7 +20,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.as.test.integration.ejb.stateful.exception;
+package org.jboss.as.test.integration.ejb.stateful.exceptionclass;
 
 public class TestException extends Exception {
     private static final long serialVersionUID = 1L;

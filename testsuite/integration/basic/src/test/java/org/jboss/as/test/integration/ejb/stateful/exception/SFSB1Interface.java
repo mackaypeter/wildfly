@@ -22,6 +22,8 @@
 
 package org.jboss.as.test.integration.ejb.stateful.exception;
 
+import org.jboss.as.test.integration.ejb.stateful.exceptionclass.TestException;
+
 public interface SFSB1Interface {
     void systemException();
     void ejbException();
