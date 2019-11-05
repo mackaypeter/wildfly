@@ -30,17 +30,13 @@ import javax.naming.NamingException;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
-import org.jboss.as.test.integration.ejb.stateful.exceptionclass.Dummy;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import sun.tools.jar.resources.jar;
-import org.jboss.arquillian.container.test.api.RunAsClient;
 
 /**
  * Tests that post construct callbacks are not called on system exception,
@@ -56,35 +52,78 @@ public class ExceptionTestCase {
     @Deployment
     public static Archive<?> deploy() {
 
-        EnterpriseArchive ear = ShrinkWrap.create(EnterpriseArchive.class, ARCHIVE_NAME + ".ear");
-
-        final JavaArchive ejbJar = ShrinkWrap.create(JavaArchive.class, "ejbJar.jar");
-        ejbJar.addPackage(ExceptionTestCase.class.getPackage());
-
-        final JavaArchive libJar = ShrinkWrap.create(JavaArchive.class, "libJar.jar");
-        libJar.addPackage(Dummy.class.getPackage());
-
-        ear.addAsModule(ejbJar);
-        ear.addAsLibrary(libJar);
-
-        ear.as(org.jboss.shrinkwrap.api.exporter.ZipExporter.class).exportTo(new java.io.File("/home/dcihak/Work/" + ear.getName()), true);
-
-        return ear;
+        JavaArchive jar = ShrinkWrap.create(JavaArchive.class, ARCHIVE_NAME + ".jar");
+        jar.addPackage(ExceptionTestCase.class.getPackage());
+        return jar;
     }
 
     @ArquillianResource
     private InitialContext iniCtx;
 
+    private DestroyMarkerBeanInterface isPreDestroy;
+
     private <T> T lookup(Class<T> beanType) throws NamingException {
-        return beanType.cast(iniCtx.lookup("java:global/" + ARCHIVE_NAME + "/ejbJar/" + beanType.getSimpleName() + "!" + beanType.getName()));
+        return beanType.cast(iniCtx.lookup("java:global/" + ARCHIVE_NAME + "/" + beanType.getSimpleName() + "!" + beanType.getName()));
     }
 
     protected SFSB1Interface getBean() throws NamingException {
         return lookup(SFSB1.class);
     }
 
+    protected DestroyMarkerBeanInterface getMarker() throws NamingException {
+        return lookup(DestroyMarkerBean.class);
+    }
+
     @Before
     public void before() throws NamingException {
+        isPreDestroy = getMarker();
+    }
+
+    /**
+     * Ensure that a system exception destroys the bean.
+     */
+    @Test
+    public void testSystemExceptionDestroysBean() throws Exception {
+
+        SFSB1Interface sfsb1 = getBean();
+        Assert.assertFalse(isPreDestroy.is());
+        try {
+            sfsb1.systemException();
+            Assert.fail("It was expected a RuntimeException being thrown");
+        } catch (RuntimeException e) {
+            Assert.assertTrue(e.getMessage().contains(SFSB1.MESSAGE));
+        }
+        Assert.assertFalse(isPreDestroy.is());
+        try {
+            sfsb1.systemException();
+            Assert.fail("Expecting NoSuchEjbException");
+        } catch (NoSuchEJBException expected) {
+        }
+    }
+
+    /**
+     * Throwing EJBException which as child of RuntimeException causes
+     * SFSB to be removed.
+     */
+    @Test
+    public void testEjbExceptionDestroysBean() throws Exception {
+
+        SFSB1Interface sfsb1 = getBean();
+        Assert.assertFalse(isPreDestroy.is());
+        try {
+            sfsb1.ejbException();
+            Assert.fail("It was expected a EJBException being thrown");
+        } catch (EJBException e) {
+            Assert.assertTrue(e.getMessage().contains(SFSB1.MESSAGE));
+        }
+        Assert.assertFalse("Thrown exception removes SFS but does not call any callback",
+                isPreDestroy.is());
+
+        try {
+            sfsb1.ejbException();
+            Assert.fail("Expecting NoSuchEjbException");
+        } catch (NoSuchEJBException expected) {
+        }
     }
 
     /**
@@ -92,19 +131,25 @@ public class ExceptionTestCase {
      * SFSB being removed.
      */
     @Test
-    @RunAsClient
     public void testUserExceptionDoesNothing() throws Exception {
 
         SFSB1Interface sfsb1 = getBean();
+        Assert.assertFalse(isPreDestroy.is());
+        try {
+            sfsb1.userException();
+            Assert.fail("It was expected a user exception being thrown");
+        } catch (TestException e) {
+            Assert.assertTrue(e.getMessage().contains(SFSB1.MESSAGE));
+        }
+        Assert.assertFalse(isPreDestroy.is());
 
         try {
             sfsb1.userException();
-            //Assert.fail("It was expected a user exception being thrown");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-            //Assert.assertTrue(e.getMessage().contains(SFSB1.MESSAGE));
+            Assert.fail("It was expected a user exception being thrown");
+        } catch (TestException e) {
+            Assert.assertTrue(e.getMessage().contains(SFSB1.MESSAGE));
         }
         sfsb1.remove();
-        //Assert.assertTrue("As remove was called preDestroy callback is expected", isPreDestroy.is());
+        Assert.assertTrue("As remove was called preDestroy callback is expected", isPreDestroy.is());
     }
 }

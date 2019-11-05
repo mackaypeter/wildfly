@@ -22,8 +22,6 @@
 
 package org.jboss.as.test.integration.ejb.stateful.exception;
 
-import org.jboss.as.test.integration.ejb.stateful.exceptionclass.TestException;
-
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.EJB;
