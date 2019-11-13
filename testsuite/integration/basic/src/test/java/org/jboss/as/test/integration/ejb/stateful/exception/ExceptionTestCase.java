@@ -136,7 +136,7 @@ public class ExceptionTestCase {
         SFSB1Interface sfsb1 = getBean();
         Assert.assertFalse(isPreDestroy.is());
         try {
-            sfsb1.userException();
+            //sfsb1.userException();
             Assert.fail("It was expected a user exception being thrown");
         } catch (TestException e) {
             Assert.assertTrue(e.getMessage().contains(SFSB1.MESSAGE));
@@ -144,7 +144,7 @@ public class ExceptionTestCase {
         Assert.assertFalse(isPreDestroy.is());
 
         try {
-            sfsb1.userException();
+            //sfsb1.userException();
             Assert.fail("It was expected a user exception being thrown");
         } catch (TestException e) {
             Assert.assertTrue(e.getMessage().contains(SFSB1.MESSAGE));

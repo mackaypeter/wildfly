@@ -63,9 +63,9 @@ public class SFSB1 implements SFSB1Interface {
         throw new EJBException(MESSAGE);
     }
 
-    public void userException() throws TestException {
+    /*public void userException() throws TestException {
         throw new TestException(MESSAGE);
-    }
+    }*/
 
     @Remove
     public void remove() {
